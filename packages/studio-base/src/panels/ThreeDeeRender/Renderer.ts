@@ -452,21 +452,17 @@ export class Renderer extends EventEmitter<RendererEvents> {
     this.addSchemaSubscriptions(FRAME_TRANSFORM_DATATYPES, {
       handler: this.handleFrameTransform,
       shouldSubscribe: () => true,
-      // Disabled until we can efficiently preload transforms. See
-      // <https://github.com/foxglove/studio/issues/4657> for more details.
-      // preload: config.scene.transforms?.enablePreloading ?? true,
+      preload: config.scene.transforms?.enablePreloading ?? true,
     });
     this.addSchemaSubscriptions(TF_DATATYPES, {
       handler: this.handleTFMessage,
       shouldSubscribe: () => true,
-      // Disabled until we can efficiently preload transforms
-      // preload: config.scene.transforms?.enablePreloading ?? true,
+      preload: config.scene.transforms?.enablePreloading ?? true,
     });
     this.addSchemaSubscriptions(TRANSFORM_STAMPED_DATATYPES, {
       handler: this.handleTransformStamped,
       shouldSubscribe: () => true,
-      // Disabled until we can efficiently preload transforms
-      // preload: config.scene.transforms?.enablePreloading ?? true,
+      preload: config.scene.transforms?.enablePreloading ?? true,
     });
 
     this.addSceneExtension(this.coreSettings);
