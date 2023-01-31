@@ -2,6 +2,7 @@
 // License, v2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/
 
+import { filterMap } from "@foxglove/den/collection";
 import Log from "@foxglove/log";
 import { compare, toSec } from "@foxglove/rostime";
 import {
@@ -278,21 +279,23 @@ function initRenderStateBuilder(): BuildRenderStateFn {
       if (newBlocks && prevBlocks !== newBlocks) {
         shouldRender = true;
         const frames: MessageEvent<unknown>[] = (renderState.allFrames = []);
-        // would be nice if we didn't have to recompute allFrames from the blocks if the blocks were changed from a preloaded topic not related to this panel
-        const topicsToPreloadForPanel = new Set<string>();
-        for (const sub of subscriptions) {
-          if (sub.preload === true) {
-            topicsToPreloadForPanel.add(sub.topic);
-          }
-        }
+        // only populate allFrames with topics that the panel wants to preload
+        const topicsToPreloadForPanel = new Set<string>(
+          Array.from(
+            filterMap(subscriptions, (sub) => (sub.preload === true ? sub.topic : undefined)),
+          ),
+        );
         for (const block of newBlocks) {
           if (!block) {
             continue;
           }
-          forEachSortedArrays(
-            Array.from(topicsToPreloadForPanel).map((topic) => block.messagesByTopic[topic] ?? []),
-            (a, b) => compare(a.receiveTime, b.receiveTime),
-            (messageEvent) => {
+
+          for (const topic of topicsToPreloadForPanel) {
+            const messageEvents = block.messagesByTopic[topic];
+            if (!messageEvents) {
+              continue;
+            }
+            for (const messageEvent of messageEvents) {
               // Message blocks may contain topics that we are not subscribed to so we need to filter those out.
               // We use the topicNoConversions and topicConversions to determine if we should include the message event
 

@@ -47,6 +47,7 @@ import {
 import {
   usePanelSettingsTreeUpdate,
   useSharedPanelState,
+  useDefaultPanelTitle,
 } from "@foxglove/studio-base/providers/PanelStateContextProvider";
 import { PanelConfig, SaveConfig } from "@foxglove/studio-base/types/panels";
 import { assertNever } from "@foxglove/studio-base/util/assertNever";
@@ -111,6 +112,7 @@ function PanelExtensionAdapter(props: PanelExtensionAdapterProps): JSX.Element {
   const isPanelInitializedRef = useRef(false);
 
   const [slowRender, setSlowRender] = useState(false);
+  const [, setDefaultPanelTitle] = useDefaultPanelTitle();
 
   const { globalVariables, setGlobalVariables } = useGlobalVariables();
 
@@ -378,13 +380,9 @@ function PanelExtensionAdapter(props: PanelExtensionAdapterProps): JSX.Element {
           };
         });
 
-        // TODO: possibly combine SubscribePayload and Subscription types
-        // renderstate was showing SubscribePayloads instead of Subscription types which is wrong
-        // not sure why these are two different types -- we should and can consolidate
+        // ExtensionPanel-Facing subscription type
         const localSubs = topics.map<Subscription>((item) => {
           if (typeof item === "string") {
-            // For backwards compatability with the topic-string-array api `subscribe(["/topic"])`
-            // results in a topic subscription with full preloading
             return { topic: item, preload: true };
           }
 
@@ -469,6 +467,13 @@ function PanelExtensionAdapter(props: PanelExtensionAdapterProps): JSX.Element {
         }
         updatePanelSettingsTree(settings);
       },
+
+      setDefaultPanelTitle: (title: string) => {
+        if (!isMounted()) {
+          return;
+        }
+        setDefaultPanelTitle(title);
+      },
     };
   }, [
     capabilities,
@@ -481,6 +486,7 @@ function PanelExtensionAdapter(props: PanelExtensionAdapterProps): JSX.Element {
     panelId,
     saveConfig,
     seekPlayback,
+    setDefaultPanelTitle,
     setGlobalVariables,
     setHoverValue,
     setSharedPanelState,
