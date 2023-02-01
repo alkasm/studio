@@ -774,9 +774,6 @@ export function ThreeDeeRender({ context }: { context: PanelExtensionContext }):
         hasAddedMessageEvents = true;
         // transform tree specific optimization - adding to tree before it's highest cache time is expensive
         // so we clear it to avoid adding to the tree before the highest cache time
-        // This is why we want to process the current frame's messages after the preloaded messages. This way if preloading
-        // hasn't completed then we can still show the current frame's messages. Though it will clear any recent transforms
-        // prior to the current frame's messages.
         renderer.transformTree.clearAfter(toNanoSec(message.receiveTime));
       }
 
@@ -799,7 +796,6 @@ export function ThreeDeeRender({ context }: { context: PanelExtensionContext }):
   }, [allFramesCursor, renderer, currentTime, allFrames, didSeek]);
 
   // Handle messages and render a frame if new messages are available
-  // Should be handled after allFrames
   useEffect(() => {
     if (!renderer || !messages) {
       return;
@@ -848,7 +844,13 @@ export function ThreeDeeRender({ context }: { context: PanelExtensionContext }):
 
   // Render a new frame if requested
   useEffect(() => {
-    if (renderer && renderRef.current.needsRender) {
+    if (
+      renderer &&
+      renderRef.current.needsRender &&
+      (allFramesCursor.cursorTimeReached != undefined && currentTime != undefined
+        ? compare(allFramesCursor.cursorTimeReached, currentTime) === 0
+        : true)
+    ) {
       renderer.animationFrame();
       renderRef.current.needsRender = false;
     }
