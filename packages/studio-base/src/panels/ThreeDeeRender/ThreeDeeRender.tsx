@@ -420,14 +420,6 @@ export function ThreeDeeRender({ context }: { context: PanelExtensionContext }):
   const [allFrames, setAllFrames] = useState<readonly MessageEvent<unknown>[] | undefined>(
     undefined,
   );
-  const [allFramesCursor, setAllFramesCursor] = useState<{
-    // index represents where the last read message is in allFrames
-    index: number;
-    cursorTimeReached?: Time;
-  }>({
-    index: -1,
-    cursorTimeReached: currentTime,
-  });
 
   const renderRef = useRef({ needsRender: false });
   const [renderDone, setRenderDone] = useState<(() => void) | undefined>();
@@ -695,24 +687,11 @@ export function ThreeDeeRender({ context }: { context: PanelExtensionContext }):
   // Flush the renderer's state when the seek count changes
   useEffect(() => {
     if (renderer && didSeek) {
-      if (
-        allFramesCursor.cursorTimeReached &&
-        currentTime != undefined &&
-        // if the time reached by the cursor is greater than the current time, then we need to reset the cursor
-        // so that it can read the messages up to that point again
-        isGreaterThan(allFramesCursor.cursorTimeReached, currentTime)
-      ) {
-        setAllFramesCursor({
-          index: -1,
-          cursorTimeReached: undefined,
-        });
-      }
-
       // want to clear after the current time only if preloading is not active or if the seek time is after the previous time
       renderer.clear();
       setDidSeek(false);
     }
-  }, [renderer, didSeek, allFramesCursor, currentTime]);
+  }, [renderer, didSeek]);
 
   // Keep the renderer colorScheme and backgroundColor up to date
   useEffect(() => {
@@ -722,27 +701,42 @@ export function ThreeDeeRender({ context }: { context: PanelExtensionContext }):
     }
   }, [backgroundColor, colorScheme, renderer]);
 
+  const allFramesCursorRef = useRef<{
+    // index represents where the last read message is in allFrames
+    index: number;
+    cursorTimeReached?: Time;
+  }>({
+    index: -1,
+    cursorTimeReached: undefined,
+  });
   // Handle preloaded messages and render a frame if new messages are available
   // Should be called before `messages` is handled
   useEffect(() => {
     // we want didseek to be handled by the renderer first so that transforms aren't cleared after the cursor has been brought up
-    if (!renderer || !currentTime || didSeek) {
+
+    if (!renderer || !currentTime) {
       return;
     }
 
+    const allFramesCursor = allFramesCursorRef.current;
     // index always indicates last read-in message
     let cursor = allFramesCursor.index;
+    let cursorTimeReached = allFramesCursor.cursorTimeReached;
 
     if (!allFrames || allFrames.length === 0) {
       // when tf preloading is disabled
       if (cursor > -1) {
-        // cursor when preloaded messages are cleared
-        setAllFramesCursor({
-          index: -1,
-          cursorTimeReached: { sec: 0, nsec: 0 },
-        });
+        allFramesCursorRef.current = { index: -1, cursorTimeReached: undefined };
       }
       return;
+    }
+
+    // if a seek occurred and the new time is before the current cursor time, reset the cursor for this read
+    if (didSeek) {
+      if (cursorTimeReached && isGreaterThan(currentTime, cursorTimeReached)) {
+        cursorTimeReached = undefined;
+        cursor = -1;
+      }
     }
 
     /**
@@ -752,7 +746,6 @@ export function ThreeDeeRender({ context }: { context: PanelExtensionContext }):
      *  - allFrame chunks are only ever loaded from beginning to end and does not have any eviction
      */
 
-    let cursorTimeReached = allFramesCursor.cursorTimeReached;
     // cursor should never be over allFramesLength, if it some how is, it means the cursor was at the end of `allFrames` prior to eviction and eviction shortened allframes
     // in this case we should set the cursor to the end of allFrames
     cursor = Math.min(cursor, allFrames.length - 1);
@@ -788,12 +781,12 @@ export function ThreeDeeRender({ context }: { context: PanelExtensionContext }):
       return;
     }
 
-    setAllFramesCursor({ index: cursor, cursorTimeReached });
+    allFramesCursorRef.current = { index: cursor, cursorTimeReached };
     // want to re-render if frames were read and if the current time has been reached to avoid showing intermediate state
     if (cursorTimeReached && compare(cursorTimeReached, currentTime) === 0) {
       renderRef.current.needsRender = true;
     }
-  }, [allFramesCursor, renderer, currentTime, allFrames, didSeek]);
+  }, [renderer, currentTime, allFrames, didSeek]);
 
   // Handle messages and render a frame if new messages are available
   useEffect(() => {
@@ -844,11 +837,12 @@ export function ThreeDeeRender({ context }: { context: PanelExtensionContext }):
 
   // Render a new frame if requested
   useEffect(() => {
+    const { cursorTimeReached } = allFramesCursorRef.current;
     if (
       renderer &&
       renderRef.current.needsRender &&
-      (allFramesCursor.cursorTimeReached != undefined && currentTime != undefined
-        ? compare(allFramesCursor.cursorTimeReached, currentTime) === 0
+      (cursorTimeReached != undefined && currentTime != undefined
+        ? compare(cursorTimeReached, currentTime) === 0
         : true)
     ) {
       renderer.animationFrame();
