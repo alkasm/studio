@@ -733,7 +733,7 @@ export function ThreeDeeRender({ context }: { context: PanelExtensionContext }):
 
     // if a seek occurred and the new time is before the current cursor time, reset the cursor for this read
     if (didSeek) {
-      if (cursorTimeReached && isGreaterThan(currentTime, cursorTimeReached)) {
+      if (cursorTimeReached && isGreaterThan(cursorTimeReached, currentTime)) {
         cursorTimeReached = undefined;
         cursor = -1;
       }
