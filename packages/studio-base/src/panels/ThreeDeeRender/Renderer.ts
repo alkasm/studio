@@ -998,7 +998,7 @@ export class Renderer extends EventEmitter<RendererEvents> {
       this.settings.errors.add(
         ["transforms", `frame:${childFrameId}`],
         TF_OVERFLOW,
-        `Transform history is at capacity (${frame.maxCapacity}), TFs will be dropped`,
+        `[Warning] Transform history is at capacity (${frame.maxCapacity}), old TFs will be dropped`,
       );
     }
   }
