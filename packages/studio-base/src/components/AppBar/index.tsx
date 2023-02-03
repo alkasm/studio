@@ -81,6 +81,8 @@ const useStyles = makeStyles<{ leftInset?: number; debugDragRegion?: boolean }>(
       middle: {
         gridArea: "middle",
         justifySelf: "center",
+        overflow: "hidden",
+        maxWidth: "100%",
       },
 
       end: {
