@@ -1,6 +1,6 @@
 {
   "name": "foxglove-studio",
-  "version": "1.39.0-dev",
+  "version": "1.39.1-dev",
   "description": "Integrated robotics visualization and debugging.",
   "productName": "Foxglove Studio",
   "productDescription": "Foxglove Studio is a highly customizable and extensible visualization and display tool for robotics.",
@@ -117,7 +117,7 @@
     "semver": "7.3.8",
     "ts-node": "10.9.1",
     "ts-prune": "0.10.3",
-    "tslib": "2.4.1",
+    "tslib": "2.5.0",
     "typescript": "4.9.4",
     "typescript-plugin-css-modules": "4.1.1",
     "webpack": "5.75.0",
