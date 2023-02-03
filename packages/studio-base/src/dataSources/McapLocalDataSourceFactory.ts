@@ -26,7 +26,7 @@ class McapLocalDataSourceFactory implements IDataSourceFactory {
       initWorker: () => {
         return new Worker(
           new URL(
-            "@foxglove/studio-base/players/IterablePlayer/mcap/McapIterableSourceWorker.worker",
+            "@foxglove/studio-base/players/IterablePlayer/Mcap/McapIterableSourceWorker.worker",
             import.meta.url,
           ),
         );
