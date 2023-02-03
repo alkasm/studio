@@ -107,7 +107,7 @@ function LabeledAppBar({ label }: React.PropsWithChildren<{ label: string }>) {
   );
 }
 
-export function DataSources(): JSX.Element {
+export function PlayerStates(): JSX.Element {
   return (
     <Stack overflowY="auto">
       <div
@@ -129,6 +129,18 @@ export function DataSources(): JSX.Element {
             <LabeledAppBar label={presence} {...actions} />
           </MockMessagePipelineProvider>
         ))}
+      </div>
+    </Stack>
+  );
+}
+DataSources.parameters = { colorScheme: "light" };
+
+export function DataSources(): JSX.Element {
+  return (
+    <Stack overflowY="auto">
+      <div
+        style={{ display: "grid", gridTemplateColumns: "max-content auto", alignItems: "center" }}
+      >
         <MockMessagePipelineProvider
           name="roman-transbot (dev_W m1gvryKJmREqnVT)"
           presence={PlayerPresence.ERROR}
