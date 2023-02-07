@@ -238,40 +238,48 @@ class BenchmarkPlayer implements Player {
     // eslint-disable-next-line no-restricted-syntax
     console.log(frameMs);
 
-    const seekFramesMs: number[] = [];
+    const tries = 20;
     const steps = 10;
-    // test seek backwards over 10 steps
-    for (let i = steps - 1; i >= 0; i--) {
-      const seekToMessage = msgEvents[Math.floor((i / steps) * msgEvents.length)]!;
-      const startFrame = performance.now();
-      await listener({
-        profile: undefined,
-        presence: PlayerPresence.PRESENT,
-        name: this.name,
-        playerId: this.name,
-        capabilities: CAPABILITIES,
-        progress: progressForListener,
-        activeData: {
-          messages: [seekToMessage],
-          totalBytesReceived,
-          startTime,
-          endTime,
-          currentTime: seekToMessage.receiveTime,
-          isPlaying: false,
-          speed: 1,
-          lastSeekTime: Date.now(),
-          topics,
-          topicStats,
-          datatypes,
-        },
-      });
-      const endFrame = performance.now();
-      seekFramesMs.push(endFrame - startFrame);
+    const seekFramesMsTotals: number[] = new Array(steps).fill(0);
+    for (let count = 0; count < tries; count++) {
+      const seekFramesMs = [];
+      // test seek backwards over 10 steps
+      for (let i = steps - 1; i >= 0; i--) {
+        const seekToMessage = msgEvents[Math.floor((i / steps) * msgEvents.length)]!;
+        const startFrame = performance.now();
+        await listener({
+          profile: undefined,
+          presence: PlayerPresence.PRESENT,
+          name: this.name,
+          playerId: this.name,
+          capabilities: CAPABILITIES,
+          progress: progressForListener,
+          activeData: {
+            messages: [seekToMessage],
+            totalBytesReceived,
+            startTime,
+            endTime,
+            currentTime: seekToMessage.receiveTime,
+            isPlaying: false,
+            speed: 1,
+            lastSeekTime: Date.now(),
+            topics,
+            topicStats,
+            datatypes,
+          },
+        });
+        const endFrame = performance.now();
+        seekFramesMs.push(endFrame - startFrame);
+      }
+      seekFramesMs.forEach((ms, i) => (seekFramesMsTotals[i]! += ms));
     }
-    const seekFrameStatsMs = getFrameStats(seekFramesMs);
 
     log.info(
-      `Seek frame time average: ${seekFrameStatsMs.avgFrameMs}, median: ${seekFrameStatsMs.medianFrameMs}, P90: ${seekFrameStatsMs.p90FrameMs}`,
+      `Seek frame times (from end to beginning of playtime): ${seekFramesMsTotals
+        .map((total) => {
+          return (total / tries).toFixed(2);
+        })
+        .join("ms, ")}ms`,
     );
   }
 }
