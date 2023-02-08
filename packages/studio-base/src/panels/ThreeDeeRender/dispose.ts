@@ -4,8 +4,6 @@
 
 import * as THREE from "three";
 
-import { Renderable } from "./Renderable";
-
 export function disposeMaterial(material: THREE.Material): void {
   if (material instanceof THREE.MeshStandardMaterial) {
     material.map?.dispose();
@@ -25,8 +23,9 @@ export function disposeMaterial(material: THREE.Material): void {
 
 export function disposeMeshesRecursive(object: THREE.Object3D): void {
   const disposeAny = (obj: THREE.Object3D) => {
-    if (obj instanceof Renderable) {
-      obj.dispose();
+    const maybeDisposable = obj as { dispose?: () => void };
+    if (maybeDisposable.dispose) {
+      maybeDisposable.dispose();
     } else if (obj instanceof THREE.Mesh) {
       obj.geometry.dispose();
       if (Array.isArray(obj.material)) {
