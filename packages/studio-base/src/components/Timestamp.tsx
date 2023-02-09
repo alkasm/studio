@@ -4,6 +4,7 @@
 
 import { Typography } from "@mui/material";
 import { useMemo } from "react";
+import { makeStyles } from "tss-react/mui";
 
 import { Time } from "@foxglove/rostime";
 import Stack from "@foxglove/studio-base/components/Stack";
@@ -19,8 +20,15 @@ type Props = {
   timezone?: string;
 };
 
+const useStyles = makeStyles()({
+  numericValue: {
+    fontFeatureSettings: `${fonts.SANS_SERIF_FEATURE_SETTINGS}, zero`,
+  },
+});
+
 export default function Timestamp(props: Props): JSX.Element {
   const { disableDate = false, horizontal = false, time, timezone } = props;
+  const { classes } = useStyles();
   const { formatTime } = useAppTimeFormat();
   const currentTimeStr = useMemo(() => formatTime(time), [time, formatTime]);
   const rawTimeStr = useMemo(() => formatTimeRaw(time), [time]);
@@ -47,9 +55,9 @@ export default function Timestamp(props: Props): JSX.Element {
       >
         {!disableDate && (
           <Typography
+            className={classes.numericValue}
             noWrap
             fontWeight={!horizontal ? 700 : undefined}
-            fontFamily={fonts.MONOSPACE}
             variant="inherit"
           >
             {date}
@@ -57,7 +65,7 @@ export default function Timestamp(props: Props): JSX.Element {
         )}
 
         <Stack direction="row" alignItems="center" flexShrink={0} gap={0.5}>
-          <Typography variant="inherit" fontFamily={fonts.MONOSPACE}>
+          <Typography variant="inherit" className={classes.numericValue}>
             {currentTimeStr}
           </Typography>
         </Stack>
